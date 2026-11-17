@@ -1,0 +1,153 @@
+import { useCallback, useEffect, useMemo } from "react";
+// @ts-ignore
+import { AppShell, type PageMeta } from "./components/AppShell";
+import { EmptyPanel } from "./components/Feedback";
+import { useHashRoute } from "./hooks/useHashRoute";
+import { AlbumPage } from "./pages/AlbumPage";
+import { AlbumsPage } from "./pages/AlbumsPage";
+import { ArtistPage } from "./pages/ArtistPage";
+import { ArtistsPage } from "./pages/ArtistsPage";
+import { HomePage } from "./pages/HomePage";
+import { SearchPage } from "./pages/SearchPage";
+import { SettingsPage } from "./pages/SettingsPage";
+import { SongsPage } from "./pages/SongsPage";
+import { PlayerProvider } from "./player/PlayerContext";
+import { LyricsSettingsProvider } from "./lib/lyrics-settings";
+
+function parsePage(value: string | null): number {
+  const parsed = Number.parseInt(value ?? "1", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+export default function App() {
+  const { route, navigate } = useHashRoute();
+  const [query, setQuery] = useState(route.query.get("q") ?? "");
+
+  const handleSearch = useCallback(
+    (query: string) => {
+      const trimmed = query.trim();
+      setQuery(trimmed);
+      navigate(trimmed ? `/search?q=${encodeURIComponent(trimmed)}` : "/search");
+    },
+    [navigate],
+  );
+
+  const page = parsePage(route.query.get("page"));
+
+  const { meta, content } = useMemo(() => {
+    const [head, id] = route.segments;
+
+    if (!head) {
+      return {
+        meta: { title: "Início" },
+        content: <HomePage />,
+      };
+    }
+
+    if (head === "artists") {
+      if (id) {
+        return {
+          meta: { title: "Artista", backHref: "#/artists" },
+          content: <ArtistPage id={id} />,
+        };
+      }
+      return {
+        meta: { title: "Artistas" },
+        content: (
+          <ArtistsPage page={page} onPageChange={(next) => navigate(`/artists?page=${next}`)} />
+        ),
+      };
+    }
+
+    if (head === "albums") {
+      if (id) {
+        return {
+          meta: { title: "Álbum", backHref: "#/albums" },
+          content: <AlbumPage id={id} />,
+        };
+      }
+      return {
+        meta: { title: "Álbuns" },
+        content: (
+          <AlbumsPage page={page} onPageChange={(next) => navigate(`/albums?page=${next}`)} />
+        ),
+      };
+    }
+
+    if (head === "songs") {
+      return {
+        meta: { title: "Músicas" },
+        content: (
+          <SongsPage page={page} query={query} onPageChange={(next) => {
+            const params = new URLSearchParams();
+            if (query) {
+              params.set("q", query);
+            }
+            params.set("page", String(next));
+            navigate(`/songs?${params.toString()}`);
+          }}
+// @ts-ignore
+// @ts-ignore
+          onQueryChange={handleSearch}
+        ),
+      };
+    }
+
+    if (head === "playlists") {
+      return {
+        meta: { title: "Playlists" },
+        content: <PlaylistPage page={page} />,
+      };
+    }
+
+    if (head === "search") {
+      return {
+        meta: { title: "Buscar", backHref: "#/" },
+        content: (
+          <SearchPage query={query} onQueryChange={handleSearch} />
+        ),
+      };
+    }
+
+    if (head === "settings") {
+      return {
+        meta: { title: "Configurações" },
+        content: <SettingsPage />,
+      };
+    }
+
+    return {
+      meta: { title: "Não encontrado" },
+      content: (
+        <EmptyPanel
+          title="Esta página não existe"
+          message="O endereço acessado não corresponde a nenhuma tela do Floria Tune."
+          icon="error"
+          actionLabel="Ir para o início"
+          actionHref="#/"
+        />
+      ),
+    };
+  }, [route.segments, page, query, navigate, handleSongsQuery, handleSearchQuery]);
+
+  useEffect(() => {
+    document.title = `${meta.title} · Floria Tune`;
+  }, [meta.title]);
+
+  const scrollKey = `${route.path}?${route.query.toString()}`;
+
+  return (
+    <LyricsSettingsProvider>
+      <PlayerProvider>
+        <AppShell
+          meta={meta}
+          currentPath={route.path}
+          scrollKey={scrollKey}
+          onSearch={handleSearch}
+        >
+          {content}
+        </AppShell>
+      </PlayerProvider>
+    </LyricsSettingsProvider>
+  );
+}

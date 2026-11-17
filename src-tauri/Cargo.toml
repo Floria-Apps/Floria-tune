@@ -1,0 +1,65 @@
+[package]
+name = "floria-tune"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["you"]
+edition = "2024"
+
+[lib]
+name = "floria_tune_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# Desktop framework
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-opener = "2"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# HTTP Client
+reqwest = { version = "0.12", features = ["json"] }
+
+# OpenSubsonic API client
+opensubsonic = "0.7"
+
+# Timeouts for connection probes
+tokio = { version = "1", features = ["time", "sync", "fs"] }
+
+# System tray (StatusNotifierItem) for Linux/Wayland
+ksni = "0.3"
+
+# Audio playback engine (libmpv)
+rsmpv = "0.2"
+
+# SQLite persistence
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["time", "sync", "fs", "test-util", "macros", "rt-multi-thread"] }
+wiremock = "0.6"
+tempfile = "3"
+pretty_assertions = "1"
+serial_test = "3"
+
+[profile.dev]
+# Keep iteration fast: line tables only (enough for backtraces) and unpacked
+# debuginfo so the linker does not have to merge one giant DWARF blob.
+debug = "line-tables-only"
+split-debuginfo = "unpacked"
+
+# Dependencies are rarely debugged; skipping their debug info shrinks the build
+# and speeds up both compilation and linking.
+[profile.dev.package."*"]
+debug = false
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true
