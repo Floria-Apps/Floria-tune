@@ -44,7 +44,7 @@ tokio = { version = "1", features = ["time", "sync", "fs", "test-util", "macros"
 wiremock = "0.6"
 tempfile = "3"
 pretty_assertions = "1"
-serial_test = "3"
+serial_test = "4"
 
 [profile.dev]
 # Keep iteration fast: line tables only (enough for backtraces) and unpacked
