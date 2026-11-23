@@ -37,7 +37,7 @@ ksni = "0.3"
 rsmpv = "0.2"
 
 # SQLite persistence
-rusqlite = { version = "0.32", features = ["bundled"] }
+rusqlite = { version = "0.43", features = ["bundled"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["time", "sync", "fs", "test-util", "macros", "rt-multi-thread"] }
